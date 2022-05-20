@@ -1,11 +1,14 @@
 package com.sjdf.demo;
 
 import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.configuration.JobRegistry;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
@@ -23,6 +26,7 @@ import org.springframework.batch.item.file.FlatFileItemWriter;
 import org.springframework.batch.item.file.builder.FlatFileItemWriterBuilder;
 import org.springframework.batch.item.file.transform.PassThroughLineAggregator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
@@ -59,33 +63,18 @@ public class CustomBatchConfiguration {
         return provider;
     }
 
-    @Autowired
-    private JobLauncher jobLauncher;
-
     @Bean
-    public SimpleJobOperator jobOperator(JobExplorer jobExplorer,
-                                         JobRepository jobRepository,
-                                         JobRegistry jobRegistry) {
-
-        SimpleJobOperator jobOperator = new SimpleJobOperator();
-
-        jobOperator.setJobExplorer(jobExplorer);
-        jobOperator.setJobRepository(jobRepository);
-        jobOperator.setJobRegistry(jobRegistry);
-        jobOperator.setJobLauncher(jobLauncher);
-
-        return jobOperator;
-    }
-
-    @Bean
-    public JdbcPagingItemReader itemReader(DataSource dataSource, PagingQueryProvider queryProvider) {
-//        Map<String, Object> parameterValues = new HashMap<>();
-//        parameterValues.put("table", "NEW");
+    @StepScope
+    public JdbcPagingItemReader itemReader(DataSource dataSource, PagingQueryProvider queryProvider, @Value("#{jobParameters['table']}") String table) {
+        Map<String, Object> parameterValues = new HashMap<>();
+        parameterValues.put("table", table);
+        MySqlPagingQueryProvider p = (MySqlPagingQueryProvider) queryProvider;
+        p.setFromClause("from " + table);
         return new JdbcPagingItemReaderBuilder<Map<String, Object>>()
                 .name("itemReader")
                 .dataSource(dataSource)
                 .queryProvider(queryProvider)
-//                .parameterValues(parameterValues)
+                .parameterValues(parameterValues)
                 .rowMapper(personMapper())
                 .pageSize(1000)
                 .build();
