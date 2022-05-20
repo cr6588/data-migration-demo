@@ -1,0 +1,57 @@
+<!-- Logback configuration. See http://logback.qos.ch/manual/index.html -->
+<!-- See http://blog.csdn.net/appleyk/article/details/78717388 -->
+<configuration scan="true" scanPeriod="10 seconds">
+    <include resource="org/springframework/boot/logging/logback/base.xml" />
+    <property name="LOG_PATH" value="logs/"/>
+    <appender name="APP_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <File>${LOG_PATH}/appLog.log</File>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/appLog-%d{yyyyMMdd}.log.%i</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>10MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>5</maxHistory>
+        </rollingPolicy>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} -%msg%n</Pattern>
+        </layout>
+    </appender>
+    <appender name="API_PARAM" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${LOG_PATH}/apiParamterInfo.log</File>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/apiParamterInfo-%d{yyyyMMdd}.log.%i</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>10MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>5</maxHistory>
+        </rollingPolicy>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>%d{yyyy-MM-dd HH:mm:ss} -%msg%n</Pattern>
+        </layout>
+    </appender>
+    <appender name="API_TOP" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${LOG_PATH}/apiTopInfo.log</File>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/apiTopInfo-%d{yyyyMMdd}.log.%i</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>10MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>5</maxHistory>
+        </rollingPolicy>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>%d{yyyy-MM-dd HH:mm:ss} -%msg%n</Pattern>
+        </layout>
+    </appender>
+    <root level="INFO">
+        <appender-ref ref="APP_LOG" />
+    </root>
+    <logger name="API_PARAM" level="INFO" additivity="false">
+        <appender-ref ref="API_PARAM" />
+    </logger>
+    <logger name="API_TOP" level="INFO" additivity="false">
+        <appender-ref ref="API_TOP" />
+    </logger>
+</configuration>
