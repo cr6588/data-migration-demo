@@ -24,8 +24,8 @@ import org.springframework.jdbc.core.RowMapper;
 
 import javax.sql.DataSource;
 
-//@Configuration
-//@EnableBatchProcessing
+@Configuration
+@EnableBatchProcessing
 public class BatchConfiguration {
 
     @Autowired
