@@ -29,9 +29,11 @@ public class MapItemProcessor implements ItemProcessor<Map<String, Object>, Stri
         sb.append(") VALUES (");
         for (String o : map.keySet()) {
             Object v = map.get(o);
-            //TODO 值当中有引号时待处理
             if(v instanceof String) {
-                sb.append("'" + v + "', ");
+                //值当中有引号时加入\转义
+                String val = ((String) v);
+                val = val.replace("'", "\\'");
+                sb.append("'" + val + "', ");
             } else {
                 sb.append(v + ", ");
             }

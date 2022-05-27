@@ -8,50 +8,27 @@
             <level>INFO</level>
         </filter>
         <File>${LOG_PATH}/appLog.log</File>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/appLog-%d{yyyyMMdd}.log.%i</fileNamePattern>
-            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>10MB</maxFileSize>
-            </timeBasedFileNamingAndTriggeringPolicy>
-            <maxHistory>5</maxHistory>
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/appLog.log.%i</fileNamePattern>
+            <minIndex>1</minIndex>
+            <maxIndex>5</maxIndex>
         </rollingPolicy>
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <maxFileSize>10MB</maxFileSize>
+        </triggeringPolicy>
         <layout class="ch.qos.logback.classic.PatternLayout">
             <Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} -%msg%n</Pattern>
         </layout>
     </appender>
-    <appender name="API_PARAM" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <File>${LOG_PATH}/apiParamterInfo.log</File>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/apiParamterInfo-%d{yyyyMMdd}.log.%i</fileNamePattern>
-            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>10MB</maxFileSize>
-            </timeBasedFileNamingAndTriggeringPolicy>
-            <maxHistory>5</maxHistory>
-        </rollingPolicy>
-        <layout class="ch.qos.logback.classic.PatternLayout">
-            <Pattern>%d{yyyy-MM-dd HH:mm:ss} -%msg%n</Pattern>
-        </layout>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- encoders are assigned the type
+             ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+        <encoder>
+<!--            <pattern>%-4relative [%thread] %-5level %logger{35} - %msg %n</pattern>-->
+            <Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} -%msg%n</Pattern>
+        </encoder>
     </appender>
-    <appender name="API_TOP" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <File>${LOG_PATH}/apiTopInfo.log</File>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/apiTopInfo-%d{yyyyMMdd}.log.%i</fileNamePattern>
-            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>10MB</maxFileSize>
-            </timeBasedFileNamingAndTriggeringPolicy>
-            <maxHistory>5</maxHistory>
-        </rollingPolicy>
-        <layout class="ch.qos.logback.classic.PatternLayout">
-            <Pattern>%d{yyyy-MM-dd HH:mm:ss} -%msg%n</Pattern>
-        </layout>
-    </appender>
-    <root level="INFO">
-        <appender-ref ref="APP_LOG" />
+    <root level="DEBUG">
+        <appender-ref ref="STDOUT" />
     </root>
-    <logger name="API_PARAM" level="INFO" additivity="false">
-        <appender-ref ref="API_PARAM" />
-    </logger>
-    <logger name="API_TOP" level="INFO" additivity="false">
-        <appender-ref ref="API_TOP" />
-    </logger>
 </configuration>

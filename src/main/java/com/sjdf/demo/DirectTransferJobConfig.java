@@ -3,6 +3,7 @@ package com.sjdf.demo;
 import com.alibaba.druid.pool.DruidDataSource;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
@@ -12,19 +13,12 @@ import org.springframework.batch.item.database.PagingQueryProvider;
 import org.springframework.batch.item.database.builder.JdbcPagingItemReaderBuilder;
 import org.springframework.batch.item.database.support.MySqlPagingQueryProvider;
 import org.springframework.batch.item.database.support.SqlPagingQueryProviderFactoryBean;
-import org.springframework.batch.item.file.FlatFileItemReader;
-import org.springframework.batch.item.file.FlatFileItemWriter;
-import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
-import org.springframework.batch.item.file.builder.FlatFileItemWriterBuilder;
-import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
-import org.springframework.batch.item.file.mapping.PassThroughLineMapper;
-import org.springframework.batch.item.file.transform.PassThroughLineAggregator;
+import org.springframework.batch.item.file.FlatFileParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.FileSystemResource;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.RowMapper;
 
 import javax.sql.DataSource;
@@ -32,9 +26,8 @@ import java.sql.ResultSetMetaData;
 import java.util.HashMap;
 import java.util.Map;
 
-
-//@Configuration
-public class CustomBatchConfiguration {
+@Configuration
+public class DirectTransferJobConfig {
 
     @Autowired
     public JobBuilderFactory jobBuilderFactory;
@@ -51,15 +44,18 @@ public class CustomBatchConfiguration {
         return provider.getObject();
     }
 
+    /**
+     * 需要依赖datasource
+     */
     private Map<String, PagingQueryProvider> queryProviderMap = new HashMap<>();
     private Map<String, DataSource> dsMap = new HashMap<>();
 
     @Bean
     @StepScope
-    public JdbcPagingItemReader tableDataReader(@Value("#{jobParameters['url']}") String url,
+    public JdbcPagingItemReader tableDataReader(@Value("#{jobParameters['in.url']}") String url,
                                                 @Value("#{jobParameters['table']}") String table,
-                                                @Value("#{jobParameters['username']}") String username,
-                                                @Value("#{jobParameters['password']}") String password) {
+                                                @Value("#{jobParameters['in.username']}") String username,
+                                                @Value("#{jobParameters['in.password']}") String password) {
         DataSource dataSource = getDataSource(url, username, password);
         PagingQueryProvider queryProvider = queryProviderMap.get(url);
         if(queryProvider == null) {
@@ -130,74 +126,37 @@ public class CustomBatchConfiguration {
         return new MapItemProcessor();
     }
 
-    @Bean
-    public FlatFileItemWriter<String> tableDataFileWriter() {
-        FlatFileItemWriter<String> tableDataFileWriter = new FlatFileItemWriterBuilder<String>()
-                .name("tableDataFileWriter")
-                .resource(new FileSystemResource("target/test-outputs/output.txt"))
-                .lineAggregator(new PassThroughLineAggregator<>())
-                .build();
-        return tableDataFileWriter;
-    }
-
-    @Bean
-    public Job exportTableJob(Step exportTableStep) {
-        return jobBuilderFactory.get("exportTableJob")
-                .incrementer(new RunIdIncrementer())
-                .start(exportTableStep)
-                .build();
-    }
-
-    @Bean
-    public Step exportTableStep(JdbcPagingItemReader<Map<String, Object>> reader) {
-        return stepBuilderFactory.get("exportTableStep")
-                .<Map<String, Object>, String> chunk(1000)//提交间隔
-                .reader(reader)
-                .processor(mapItemProcessor())
-                .writer(tableDataFileWriter())
-                .allowStartIfComplete(true)
-                .build();
-    }
-
-
-
-
-    @Bean
-    public FlatFileItemReader<String> tableFileDataReader() {
-        return new FlatFileItemReaderBuilder<String>()
-                .name("tableFileDataReader")
-                .resource(new FileSystemResource("target/test-outputs/output.txt"))
-                .lineMapper(new PassThroughLineMapper())
-                .build();
-    }
-
     @StepScope
     @Bean
-    public TableDataWriter tableDataWriter(@Value("#{jobParameters['url']}") String url,
-                                                       @Value("#{jobParameters['table']}") String table,
-                                                       @Value("#{jobParameters['username']}") String username,
-                                                       @Value("#{jobParameters['password']}") String password) {
+    public TableDataWriter tableDataWriter(@Value("#{jobParameters['out.url']}") String url,
+                                           @Value("#{jobParameters['table']}") String table,
+                                           @Value("#{jobParameters['out.username']}") String username,
+                                           @Value("#{jobParameters['out.password']}") String password) {
         DataSource dataSource = getDataSource(url, username, password);
         return new TableDataWriter(dataSource);
     }
 
-
     @Bean
-    public Job importTableJob(Step importTableStep) {
-        return jobBuilderFactory.get("exportTableJob")
+    public Job directTransferJob(Step directTransferJobStep) {
+        return jobBuilderFactory.get("directTransferJob")
                 .incrementer(new RunIdIncrementer())
-                .start(importTableStep)
+                .start(directTransferJobStep)
                 .build();
     }
 
     @Bean
-    public Step importTableStep(TableDataWriter tableDataWriter) {
-        return stepBuilderFactory.get("exportTableStep")
-                .<String, String> chunk(1000)//提交间隔
-                .reader(tableFileDataReader())
-//                .processor(mapItemProcessor())
+    public Step directTransferJobStep(JdbcPagingItemReader<Map<String, Object>> reader, TableDataWriter tableDataWriter) {
+        return stepBuilderFactory.get("directTransferJobStep")
+                .<Map<String, Object>, String> chunk(1000)//提交间隔
+                .reader(reader)
+                .processor(mapItemProcessor())
                 .writer(tableDataWriter)
+                //配置跳过
+                .faultTolerant()
+                .skip(DuplicateKeyException.class) //跳过主键重复异常
+                .skipLimit(Integer.MAX_VALUE)
                 .allowStartIfComplete(true)
                 .build();
     }
+
 }

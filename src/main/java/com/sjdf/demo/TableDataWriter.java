@@ -15,10 +15,11 @@ public class TableDataWriter implements ItemWriter<String> {
 
     private JdbcTemplate jdbcTemplate;
 
+    //setp中设置跳过主键重复异常后，当批量插入报出该异常后，会自动单个传入再试一次
     @Override
     public void write(List<? extends String> list) throws Exception {
-        for (String sql : list) {
-            jdbcTemplate.execute((java.lang.String) sql);
-        }
+        String[] arrays = new String[list.size()];
+        list.toArray(arrays);
+        jdbcTemplate.batchUpdate(arrays);
     }
 }
