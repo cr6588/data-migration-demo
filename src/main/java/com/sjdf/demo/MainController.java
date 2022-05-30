@@ -55,6 +55,7 @@ public class MainController {
         return "ok";
     }
 
+
     @PostMapping("/stopJob")
     public String stopJob(String jobName) {
         Set<Long> executions = null;

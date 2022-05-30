@@ -196,7 +196,7 @@ public class CustomBatchConfiguration {
                 .<String, String> chunk(1000)//提交间隔
                 .reader(tableFileDataReader())
 //                .processor(mapItemProcessor())
-                .writer(tableDataWriter)
+//                .writer(tableDataWriter)
                 .allowStartIfComplete(true)
                 .build();
     }
